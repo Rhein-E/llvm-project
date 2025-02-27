@@ -18,6 +18,7 @@
 #include "clang/Basic/Attributes.h"
 #include "clang/Basic/CharInfo.h"
 #include "clang/Basic/TargetInfo.h"
+#include "clang/Basic/TokenKinds.h"
 #include "clang/Parse/ParseDiagnostic.h"
 #include "clang/Parse/Parser.h"
 #include "clang/Parse/RAIIObjectsForParser.h"
@@ -4188,6 +4189,10 @@ void Parser::ParseDeclarationSpecifiers(
       isInvalid = DS.SetTypeSpecType(DeclSpec::TST_double, Loc, PrevSpec,
                                      DiagID, Policy);
       break;
+    case tok::kw__AutoTuning:
+      isInvalid = DS.SetTypeSpecType(DeclSpec::TST_AutoTuning, Loc, PrevSpec,
+                                     DiagID, Policy);
+      break;
     case tok::kw__Float16:
       isInvalid = DS.SetTypeSpecType(DeclSpec::TST_float16, Loc, PrevSpec,
                                      DiagID, Policy);
@@ -5326,6 +5331,7 @@ bool Parser::isKnownToBeTypeSpecifier(const Token &Tok) const {
   case tok::kw_half:
   case tok::kw_float:
   case tok::kw_double:
+  case tok::kw__AutoTuning:
   case tok::kw__Accum:
   case tok::kw__Fract:
   case tok::kw__Float16:
@@ -5410,6 +5416,7 @@ bool Parser::isTypeSpecifierQualifier() {
   case tok::kw___bf16:
   case tok::kw_float:
   case tok::kw_double:
+  case tok::kw__AutoTuning:
   case tok::kw__Accum:
   case tok::kw__Fract:
   case tok::kw__Float16:
@@ -5618,6 +5625,7 @@ bool Parser::isDeclarationSpecifier(
   case tok::kw___bf16:
   case tok::kw_float:
   case tok::kw_double:
+  case tok::kw__AutoTuning:
   case tok::kw__Accum:
   case tok::kw__Fract:
   case tok::kw__Float16:
@@ -7872,6 +7880,7 @@ bool Parser::TryAltiVecVectorTokenOutOfLine() {
   case tok::kw_int:
   case tok::kw_float:
   case tok::kw_double:
+  case tok::kw__AutoTuning:
   case tok::kw_bool:
   case tok::kw__Bool:
   case tok::kw___bool:
@@ -7908,6 +7917,7 @@ bool Parser::TryAltiVecTokenOutOfLine(DeclSpec &DS, SourceLocation Loc,
     case tok::kw_int:
     case tok::kw_float:
     case tok::kw_double:
+    case tok::kw__AutoTuning:
     case tok::kw_bool:
     case tok::kw__Bool:
     case tok::kw___bool:

@@ -1616,6 +1616,7 @@ struct AdditionalKeywords {
     case tok::kw_default:
     case tok::kw_do:
     case tok::kw_double:
+    case tok::kw__AutoTuning:
     case tok::kw_else:
     case tok::kw_enum:
     case tok::kw_explicit:
