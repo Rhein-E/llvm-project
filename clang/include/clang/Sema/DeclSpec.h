@@ -288,7 +288,7 @@ public:
   static const TST TST_BFloat16 = clang::TST_BFloat16;
   static const TST TST_float = clang::TST_float;
   static const TST TST_double = clang::TST_double;
-  static const TST TST_AutoTuning = clang::TST_AutoTuning;
+  static const TST TST_autofp = clang::TST_autofp;
   static const TST TST_float16 = clang::TST_Float16;
   static const TST TST_accum = clang::TST_Accum;
   static const TST TST_fract = clang::TST_Fract;

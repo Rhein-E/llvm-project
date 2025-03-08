@@ -1094,7 +1094,7 @@ IdentifierInfo *Parser::ParseObjCSelectorPiece(SourceLocation &SelectorLoc) {
   case tok::kw_delete:
   case tok::kw_do:
   case tok::kw_double:
-  case tok::kw__AutoTuning:
+  case tok::kw___autofp:
   case tok::kw_dynamic_cast:
   case tok::kw_else:
   case tok::kw_enum:

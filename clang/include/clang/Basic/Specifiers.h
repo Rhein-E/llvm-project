@@ -70,7 +70,7 @@ namespace clang {
     TST_BFloat16,
     TST_float,
     TST_double,
-    TST_AutoTuning,
+    TST_autofp,
     TST_float128,
     TST_ibm128,
     TST_bool,       // _Bool

@@ -4189,8 +4189,8 @@ void Parser::ParseDeclarationSpecifiers(
       isInvalid = DS.SetTypeSpecType(DeclSpec::TST_double, Loc, PrevSpec,
                                      DiagID, Policy);
       break;
-    case tok::kw__AutoTuning:
-      isInvalid = DS.SetTypeSpecType(DeclSpec::TST_AutoTuning, Loc, PrevSpec,
+    case tok::kw___autofp:
+      isInvalid = DS.SetTypeSpecType(DeclSpec::TST_autofp, Loc, PrevSpec,
                                      DiagID, Policy);
       break;
     case tok::kw__Float16:
@@ -5331,7 +5331,7 @@ bool Parser::isKnownToBeTypeSpecifier(const Token &Tok) const {
   case tok::kw_half:
   case tok::kw_float:
   case tok::kw_double:
-  case tok::kw__AutoTuning:
+  case tok::kw___autofp:
   case tok::kw__Accum:
   case tok::kw__Fract:
   case tok::kw__Float16:
@@ -5416,7 +5416,7 @@ bool Parser::isTypeSpecifierQualifier() {
   case tok::kw___bf16:
   case tok::kw_float:
   case tok::kw_double:
-  case tok::kw__AutoTuning:
+  case tok::kw___autofp:
   case tok::kw__Accum:
   case tok::kw__Fract:
   case tok::kw__Float16:
@@ -5625,7 +5625,7 @@ bool Parser::isDeclarationSpecifier(
   case tok::kw___bf16:
   case tok::kw_float:
   case tok::kw_double:
-  case tok::kw__AutoTuning:
+  case tok::kw___autofp:
   case tok::kw__Accum:
   case tok::kw__Fract:
   case tok::kw__Float16:
@@ -7880,7 +7880,7 @@ bool Parser::TryAltiVecVectorTokenOutOfLine() {
   case tok::kw_int:
   case tok::kw_float:
   case tok::kw_double:
-  case tok::kw__AutoTuning:
+  case tok::kw___autofp:
   case tok::kw_bool:
   case tok::kw__Bool:
   case tok::kw___bool:
@@ -7917,7 +7917,7 @@ bool Parser::TryAltiVecTokenOutOfLine(DeclSpec &DS, SourceLocation Loc,
     case tok::kw_int:
     case tok::kw_float:
     case tok::kw_double:
-    case tok::kw__AutoTuning:
+    case tok::kw___autofp:
     case tok::kw_bool:
     case tok::kw__Bool:
     case tok::kw___bool:

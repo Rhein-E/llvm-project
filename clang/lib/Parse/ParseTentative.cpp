@@ -1747,7 +1747,7 @@ Parser::isCXXDeclarationSpecifier(ImplicitTypenameContext AllowImplicitTypename,
   case tok::kw_half:
   case tok::kw_float:
   case tok::kw_double:
-  case tok::kw__AutoTuning:
+  case tok::kw___autofp:
   case tok::kw___bf16:
   case tok::kw__Float16:
   case tok::kw___float128:
@@ -1866,7 +1866,7 @@ bool Parser::isCXXDeclarationSpecifierAType() {
   case tok::kw_half:
   case tok::kw_float:
   case tok::kw_double:
-  case tok::kw__AutoTuning:
+  case tok::kw___autofp:
   case tok::kw___bf16:
   case tok::kw__Float16:
   case tok::kw___float128:

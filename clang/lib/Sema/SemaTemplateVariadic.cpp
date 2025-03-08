@@ -891,7 +891,7 @@ bool Sema::containsUnexpandedParameterPacks(Declarator &D) {
   case TST_half:
   case TST_float:
   case TST_double:
-  case TST_AutoTuning:
+  case TST_autofp:
   case TST_Accum:
   case TST_Fract:
   case TST_Float16:
