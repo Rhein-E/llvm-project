@@ -446,7 +446,6 @@ bool CodeGenFunction::EmitSimpleStmt(const Stmt *S,
   case Stmt::NullStmtClass: {
     auto *info = reinterpret_cast<PragmaPrecisionRangeInfo *>(getContext().getPrecisionInfo(reinterpret_cast<const NullStmt *>(S)));
     if (info) {
-      auto *inst = Builder.CreateAlloca(Builder.getInt32Ty(), nullptr, "precision_info");
       SmallVector<llvm::Metadata *, 8> MDs;
       for (auto [var, range] : zip(info->variables, info->ranges)) {
         SmallVector<llvm::Metadata *, 8> MDStrings;
@@ -465,17 +464,16 @@ bool CodeGenFunction::EmitSimpleStmt(const Stmt *S,
         }
         MDs.emplace_back(llvm::MDNode::get(getLLVMContext(), MDStrings));
       }
-      inst->setMetadata("precision", llvm::MDNode::get(getLLVMContext(), MDs));
+      auto *metadata = llvm::MDNode::get(getLLVMContext(), MDs);
+      auto *inst = Builder.CreateIntrinsic(Builder.getVoidTy(), llvm::Intrinsic::precision_range, {llvm::MetadataAsValue::get(getLLVMContext(), metadata)});
     }
 
-    if (getContext().getPrecisionRegionBegins().contains(reinterpret_cast<const NullStmt *>(S))) {
-      auto *inst = Builder.CreateAlloca(Builder.getInt32Ty(), nullptr, "precision_region_begin");
-      inst->setMetadata("precision_region_begin", llvm::MDNode::get(getLLVMContext(), {}));
+    if (getContext().getPrecisionRegionStarts().contains(reinterpret_cast<const NullStmt *>(S))) {
+      auto *inst = Builder.CreateIntrinsic(Builder.getVoidTy(), llvm::Intrinsic::precision_region_start, {});
     }
 
     if (getContext().getPrecisionRegionEnds().contains(reinterpret_cast<const NullStmt *>(S))) {
-      auto *inst = Builder.CreateAlloca(Builder.getInt32Ty(), nullptr, "precision_region_end");
-      inst->setMetadata("precision_region_end", llvm::MDNode::get(getLLVMContext(), {}));
+      auto *inst = Builder.CreateIntrinsic(Builder.getVoidTy(), llvm::Intrinsic::precision_region_end, {});
     } 
 
     break;

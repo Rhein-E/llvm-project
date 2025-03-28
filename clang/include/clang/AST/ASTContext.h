@@ -461,7 +461,7 @@ private:
   llvm::DenseMap<const NullStmt *, void *> PrecisionInfoMap;
 
   // Precision regions.
-  llvm::DenseSet<const NullStmt *> PrecisionRegionBegins;
+  llvm::DenseSet<const NullStmt *> PrecisionRegionStarts;
   llvm::DenseSet<const NullStmt *> PrecisionRegionEnds;
 
 public:
@@ -475,12 +475,12 @@ public:
     return PrecisionInfoMap.at(NS);
   }
 
-  void addPrecisionRegionBegin(const NullStmt *const NS) {
-    PrecisionRegionBegins.insert(NS);
+  void addPrecisionRegionStart(const NullStmt *const NS) {
+    PrecisionRegionStarts.insert(NS);
   }
 
-  const llvm::DenseSet<const NullStmt *> &getPrecisionRegionBegins() const {
-    return PrecisionRegionBegins;
+  const llvm::DenseSet<const NullStmt *> &getPrecisionRegionStarts() const {
+    return PrecisionRegionStarts;
   }
 
   void addPrecisionRegionEnd(const NullStmt *const NS) {
@@ -490,7 +490,7 @@ public:
   const llvm::DenseSet<const NullStmt *> &getPrecisionRegionEnds() const {
     return PrecisionRegionEnds;
   }
-  
+
 public:
   /// A type synonym for the TemplateOrInstantiation mapping.
   using TemplateOrSpecializationInfo =

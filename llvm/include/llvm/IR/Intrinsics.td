@@ -2518,6 +2518,16 @@ def int_experimental_convergence_loop
   : DefaultAttrsIntrinsic<[llvm_token_ty], [], [IntrNoMem, IntrConvergent]>;
 
 //===----------------------------------------------------------------------===//
+//===------- Precision Intrinsics ---------------------------------------===//
+
+def int_precision_range
+  : DefaultAttrsIntrinsic<[llvm_void_ty], [llvm_metadata_ty], [IntrNoMem]>;
+def int_precision_region_start
+  : DefaultAttrsIntrinsic<[llvm_void_ty], [], [IntrNoMem]>;
+def int_precision_region_end
+  : DefaultAttrsIntrinsic<[llvm_void_ty], [], [IntrNoMem]>;
+
+//===----------------------------------------------------------------------===//
 // Target-specific intrinsics
 //===----------------------------------------------------------------------===//
 

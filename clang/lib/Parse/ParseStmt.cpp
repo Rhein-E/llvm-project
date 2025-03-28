@@ -518,7 +518,7 @@ Retry:
   case tok::annot_pragma_precision_region: {
     auto loc = ConsumeToken();
     auto beginstmt = Actions.ActOnNullStmt(loc);
-    Actions.getASTContext().addPrecisionRegionBegin(beginstmt.getAs<NullStmt>());
+    Actions.getASTContext().addPrecisionRegionStart(beginstmt.getAs<NullStmt>());
     auto bodystmt = ParseCompoundStatement(false);
     auto endstmt = Actions.ActOnNullStmt(bodystmt.get()->getEndLoc());
     Actions.getASTContext().addPrecisionRegionEnd(endstmt.getAs<NullStmt>());
