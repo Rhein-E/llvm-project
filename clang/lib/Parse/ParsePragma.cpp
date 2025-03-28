@@ -362,8 +362,15 @@ private:
   Sema &Actions;
 };
 
+// Handlers for recision pragmas.
 struct PragmaPrecisionRangeHandler : public PragmaHandler {
   PragmaPrecisionRangeHandler() : PragmaHandler("range") {}
+  void HandlePragma(Preprocessor &PP, PragmaIntroducer Introducer,
+                    Token &FirstToken) override;
+};
+
+struct PragmaPrecisionRegionHandler : public PragmaHandler {
+  PragmaPrecisionRegionHandler() : PragmaHandler("region") {}
   void HandlePragma(Preprocessor &PP, PragmaIntroducer Introducer,
                     Token &FirstToken) override;
 };
@@ -523,6 +530,9 @@ void Parser::initializePragmaHandlers() {
   // Install the precision pragma handlers.
   PrecisionRangeHandler = std::make_unique<PragmaPrecisionRangeHandler>();
   PP.AddPragmaHandler("precision", PrecisionRangeHandler.get());
+
+  PrecisionRegionHandler = std::make_unique<PragmaPrecisionRegionHandler>();
+  PP.AddPragmaHandler("precision", PrecisionRegionHandler.get());
 }
 
 void Parser::resetPragmaHandlers() {
@@ -658,6 +668,9 @@ void Parser::resetPragmaHandlers() {
   // Remove the precision pragma handlers.
   PP.RemovePragmaHandler("precision", PrecisionRangeHandler.get());
   PrecisionRangeHandler.reset();
+
+  PP.RemovePragmaHandler("precision", PrecisionRegionHandler.get());
+  PrecisionRegionHandler.reset();
 }
 
 /// Handle the annotation token produced for #pragma unused(...)
@@ -4101,7 +4114,7 @@ void PragmaPrecisionRangeHandler::HandlePragma(Preprocessor &PP, PragmaIntroduce
     }
   
     // Precision range.
-    PrecisionRangeFlags range;
+    PrecisionRangeFlags range = {0, 0, 0, 0};
     do {
       PP.Lex(tok); // Eat '(' or ','.
       switch (tok.getKind()) {
@@ -4146,4 +4159,18 @@ void PragmaPrecisionRangeHandler::HandlePragma(Preprocessor &PP, PragmaIntroduce
   annotationTok.setAnnotationEndLoc(FirstToken.getLocation());
   annotationTok.setAnnotationValue(reinterpret_cast<void *>(info));
   PP.EnterToken(annotationTok, false);
+}
+
+void PragmaPrecisionRegionHandler::HandlePragma(Preprocessor &PP, PragmaIntroducer Introducer, Token &FirstToken) {
+  Token tok;
+  PP.Lex(tok);
+  if (tok.isNot(tok::eod))
+    PP.Diag(tok.getLocation(), diag::warn_pragma_extra_tokens_at_eol)
+        << PP.getSpelling(FirstToken);
+  
+  tok.startToken();
+  tok.setKind(tok::annot_pragma_precision_region);
+  tok.setLocation(FirstToken.getLocation());
+  tok.setAnnotationEndLoc(FirstToken.getLocation());
+  PP.EnterToken(tok, false);
 }

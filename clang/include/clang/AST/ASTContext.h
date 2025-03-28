@@ -460,6 +460,10 @@ private:
   // Precision pragma info attached to NullStmt Nodes.
   llvm::DenseMap<const NullStmt *, void *> PrecisionInfoMap;
 
+  // Precision regions.
+  llvm::DenseSet<const NullStmt *> PrecisionRegionBegins;
+  llvm::DenseSet<const NullStmt *> PrecisionRegionEnds;
+
 public:
   void setPrecisionInfo(const NullStmt *const NS, void *const Info) {
     PrecisionInfoMap[NS] = Info;
@@ -471,6 +475,22 @@ public:
     return PrecisionInfoMap.at(NS);
   }
 
+  void addPrecisionRegionBegin(const NullStmt *const NS) {
+    PrecisionRegionBegins.insert(NS);
+  }
+
+  const llvm::DenseSet<const NullStmt *> &getPrecisionRegionBegins() const {
+    return PrecisionRegionBegins;
+  }
+
+  void addPrecisionRegionEnd(const NullStmt *const NS) {
+    PrecisionRegionEnds.insert(NS);
+  }
+
+  const llvm::DenseSet<const NullStmt *> &getPrecisionRegionEnds() const {
+    return PrecisionRegionEnds;
+  }
+  
 public:
   /// A type synonym for the TemplateOrInstantiation mapping.
   using TemplateOrSpecializationInfo =

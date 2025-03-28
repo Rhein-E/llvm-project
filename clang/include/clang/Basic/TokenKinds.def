@@ -967,6 +967,8 @@ ANNOTATION(header_unit)
 // Annotation for end of input in clang-repl.
 ANNOTATION(repl_input_end)
 
+// Annotations for precision pragmas.
+ANNOTATION(pragma_precision_region)
 ANNOTATION(pragma_precision_range)
 
 #undef PRAGMA_ANNOTATION

@@ -508,11 +508,22 @@ Retry:
     HandlePragmaAttribute();
     return StmtEmpty();
   
-  case tok::annot_pragma_precision_range:
+  case tok::annot_pragma_precision_range: {
     auto *info = Tok.getAnnotationValue();
     auto stmt = Actions.ActOnNullStmt(ConsumeToken());
     Actions.getASTContext().setPrecisionInfo(stmt.getAs<NullStmt>(), info);
     return stmt;
+  }
+
+  case tok::annot_pragma_precision_region: {
+    auto loc = ConsumeToken();
+    auto beginstmt = Actions.ActOnNullStmt(loc);
+    Actions.getASTContext().addPrecisionRegionBegin(beginstmt.getAs<NullStmt>());
+    auto bodystmt = ParseCompoundStatement(false);
+    auto endstmt = Actions.ActOnNullStmt(bodystmt.get()->getEndLoc());
+    Actions.getASTContext().addPrecisionRegionEnd(endstmt.getAs<NullStmt>());
+    return Actions.ActOnCompoundStmt(loc, bodystmt.get()->getEndLoc(), {beginstmt.get(), bodystmt.get(), endstmt.get()}, false);
+  }
   }
 
   // If we reached this code, the statement must end in a semicolon.

@@ -467,6 +467,17 @@ bool CodeGenFunction::EmitSimpleStmt(const Stmt *S,
       }
       inst->setMetadata("precision", llvm::MDNode::get(getLLVMContext(), MDs));
     }
+
+    if (getContext().getPrecisionRegionBegins().contains(reinterpret_cast<const NullStmt *>(S))) {
+      auto *inst = Builder.CreateAlloca(Builder.getInt32Ty(), nullptr, "precision_region_begin");
+      inst->setMetadata("precision_region_begin", llvm::MDNode::get(getLLVMContext(), {}));
+    }
+
+    if (getContext().getPrecisionRegionEnds().contains(reinterpret_cast<const NullStmt *>(S))) {
+      auto *inst = Builder.CreateAlloca(Builder.getInt32Ty(), nullptr, "precision_region_end");
+      inst->setMetadata("precision_region_end", llvm::MDNode::get(getLLVMContext(), {}));
+    } 
+
     break;
   }
   case Stmt::CompoundStmtClass:
