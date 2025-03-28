@@ -11,7 +11,9 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "clang/AST/ASTContext.h"
 #include "clang/AST/PrettyDeclStackTrace.h"
+#include "clang/AST/Stmt.h"
 #include "clang/Basic/Attributes.h"
 #include "clang/Basic/PrettyStackTrace.h"
 #include "clang/Basic/TokenKinds.h"
@@ -20,6 +22,7 @@
 #include "clang/Parse/RAIIObjectsForParser.h"
 #include "clang/Sema/DeclSpec.h"
 #include "clang/Sema/EnterExpressionEvaluationContext.h"
+#include "clang/Sema/Ownership.h"
 #include "clang/Sema/Scope.h"
 #include "clang/Sema/TypoCorrection.h"
 #include "llvm/ADT/STLExtras.h"
@@ -504,6 +507,12 @@ Retry:
   case tok::annot_pragma_attribute:
     HandlePragmaAttribute();
     return StmtEmpty();
+  
+  case tok::annot_pragma_precision_range:
+    auto *info = Tok.getAnnotationValue();
+    auto stmt = Actions.ActOnNullStmt(ConsumeToken());
+    Actions.getASTContext().setPrecisionInfo(stmt.getAs<NullStmt>(), info);
+    return stmt;
   }
 
   // If we reached this code, the statement must end in a semicolon.

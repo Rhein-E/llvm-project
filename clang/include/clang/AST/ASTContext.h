@@ -456,6 +456,21 @@ class ASTContext : public RefCountedBase<ASTContext> {
 
   ASTContext &this_() { return *this; }
 
+private:
+  // Precision pragma info attached to NullStmt Nodes.
+  llvm::DenseMap<const NullStmt *, void *> PrecisionInfoMap;
+
+public:
+  void setPrecisionInfo(const NullStmt *const NS, void *const Info) {
+    PrecisionInfoMap[NS] = Info;
+  }
+
+  void *getPrecisionInfo(const NullStmt *const NS) const {
+    if (PrecisionInfoMap.find(NS) == PrecisionInfoMap.end())
+      return nullptr;
+    return PrecisionInfoMap.at(NS);
+  }
+
 public:
   /// A type synonym for the TemplateOrInstantiation mapping.
   using TemplateOrSpecializationInfo =

@@ -11,12 +11,12 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/AST/ASTContext.h"
+#include "clang/Basic/DiagnosticParse.h"
 #include "clang/Basic/PragmaKinds.h"
 #include "clang/Basic/TargetInfo.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Lex/Token.h"
 #include "clang/Parse/LoopHint.h"
-#include "clang/Parse/ParseDiagnostic.h"
 #include "clang/Parse/Parser.h"
 #include "clang/Parse/RAIIObjectsForParser.h"
 #include "clang/Sema/EnterExpressionEvaluationContext.h"
@@ -362,6 +362,12 @@ private:
   Sema &Actions;
 };
 
+struct PragmaPrecisionRangeHandler : public PragmaHandler {
+  PragmaPrecisionRangeHandler() : PragmaHandler("range") {}
+  void HandlePragma(Preprocessor &PP, PragmaIntroducer Introducer,
+                    Token &FirstToken) override;
+};
+
 void markAsReinjectedForRelexing(llvm::MutableArrayRef<clang::Token> Toks) {
   for (auto &T : Toks)
     T.setFlag(clang::Token::IsReinjected);
@@ -513,6 +519,10 @@ void Parser::initializePragmaHandlers() {
     RISCVPragmaHandler = std::make_unique<PragmaRISCVHandler>(Actions);
     PP.AddPragmaHandler("clang", RISCVPragmaHandler.get());
   }
+
+  // Install the precision pragma handlers.
+  PrecisionRangeHandler = std::make_unique<PragmaPrecisionRangeHandler>();
+  PP.AddPragmaHandler("precision", PrecisionRangeHandler.get());
 }
 
 void Parser::resetPragmaHandlers() {
@@ -644,6 +654,10 @@ void Parser::resetPragmaHandlers() {
     PP.RemovePragmaHandler("clang", RISCVPragmaHandler.get());
     RISCVPragmaHandler.reset();
   }
+
+  // Remove the precision pragma handlers.
+  PP.RemovePragmaHandler("precision", PrecisionRangeHandler.get());
+  PrecisionRangeHandler.reset();
 }
 
 /// Handle the annotation token produced for #pragma unused(...)
@@ -4060,4 +4074,76 @@ void PragmaRISCVHandler::HandlePragma(Preprocessor &PP,
     Actions.DeclareRISCVVBuiltins = true;
   else if (II->isStr("sifive_vector"))
     Actions.DeclareRISCVSiFiveVectorBuiltins = true;
+}
+
+void PragmaPrecisionRangeHandler::HandlePragma(Preprocessor &PP, PragmaIntroducer Introducer, Token &FirstToken) {
+  Token tok, annotationTok;
+  SmallVector<Token> variables;
+  SmallVector<PrecisionRangeFlags> ranges;
+
+  PP.Lex(tok);
+  while (tok.isNot(tok::eod)) {
+    if (tok.is(tok::comma)) {
+      PP.Lex(tok); // Eat ','.
+    }
+    if (tok.isNot(tok::identifier)) {
+      PP.Diag(tok.getLocation(), diag::warn_pragma_expected_identifier)
+          << PP.getSpelling(FirstToken);
+      return;
+    }
+    variables.emplace_back(tok);
+    
+    PP.Lex(tok); // Eat identifier.
+    if (tok.isNot(tok::l_paren)) {
+      PP.Diag(tok.getLocation(), diag::warn_pragma_expected_lparen)
+          << PP.getSpelling(FirstToken);
+      return;
+    }
+  
+    // Precision range.
+    PrecisionRangeFlags range;
+    do {
+      PP.Lex(tok); // Eat '(' or ','.
+      switch (tok.getKind()) {
+        case tok::kw_double:
+          range.fp64 = 1;
+          break;
+        case tok::kw_float:
+          range.fp32 = 1;
+          break;
+        case tok::kw_half:
+        case tok::kw__Float16:
+          range.fp16 = 1;
+          break;
+        case tok::kw___bf16:
+          range.bf16 = 1;
+          break;
+        default:
+          PP.Diag(tok.getLocation(), diag::warn_pragma_invalid_precision)
+              << PP.getSpelling(tok);
+          return;
+      }
+      PP.Lex(tok); // Eat precision type.
+    } while (tok.is(tok::comma));
+    if (tok.isNot(tok::r_paren)) {
+      PP.Diag(tok.getLocation(), diag::warn_pragma_expected_rparen)
+          << PP.getSpelling(tok);
+      return;
+    }
+    ranges.emplace_back(range);
+    PP.Lex(tok); // Eat ')'.
+  }
+  // Do not eat eod.
+  // PP.Lex(tok);
+
+  auto *info = new (PP.getPreprocessorAllocator()) PragmaPrecisionRangeInfo;
+  info->variables = llvm::ArrayRef<Token>(variables).copy(PP.getPreprocessorAllocator());
+  info->ranges = llvm::ArrayRef<PrecisionRangeFlags>(ranges).copy(PP.getPreprocessorAllocator());
+  
+  annotationTok.startToken();
+  annotationTok.setKind(tok::annot_pragma_precision_range);
+  annotationTok.setLocation(FirstToken.getLocation());
+  annotationTok.setAnnotationEndLoc(FirstToken.getLocation());
+  annotationTok.setAnnotationValue(reinterpret_cast<void *>(info));
+  PP.EnterToken(annotationTok, false);
 }

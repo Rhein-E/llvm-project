@@ -24,6 +24,7 @@
 #include "clang/Basic/PrettyStackTrace.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/TargetInfo.h"
+#include "clang/Lex/Token.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallSet.h"
@@ -33,6 +34,7 @@
 #include "llvm/IR/InlineAsm.h"
 #include "llvm/IR/Intrinsics.h"
 #include "llvm/IR/MDBuilder.h"
+#include "llvm/IR/Metadata.h"
 #include "llvm/Support/SaveAndRestore.h"
 #include <optional>
 
@@ -441,8 +443,32 @@ bool CodeGenFunction::EmitSimpleStmt(const Stmt *S,
   switch (S->getStmtClass()) {
   default:
     return false;
-  case Stmt::NullStmtClass:
+  case Stmt::NullStmtClass: {
+    auto *info = reinterpret_cast<PragmaPrecisionRangeInfo *>(getContext().getPrecisionInfo(reinterpret_cast<const NullStmt *>(S)));
+    if (info) {
+      auto *inst = Builder.CreateAlloca(Builder.getInt32Ty(), nullptr, "precision_info");
+      SmallVector<llvm::Metadata *, 8> MDs;
+      for (auto [var, range] : zip(info->variables, info->ranges)) {
+        SmallVector<llvm::Metadata *, 8> MDStrings;
+        MDStrings.emplace_back(llvm::MDString::get(getLLVMContext(), var.getIdentifierInfo()->getName()));
+        if (range.fp64) {
+          MDStrings.emplace_back(llvm::MDString::get(getLLVMContext(), "double"));
+        }
+        if (range.fp32) {
+          MDStrings.emplace_back(llvm::MDString::get(getLLVMContext(), "float"));
+        }
+        if (range.fp16) {
+          MDStrings.emplace_back(llvm::MDString::get(getLLVMContext(), "fp16"));
+        }
+        if (range.bf16) {
+          MDStrings.emplace_back(llvm::MDString::get(getLLVMContext(), "bf16"));
+        }
+        MDs.emplace_back(llvm::MDNode::get(getLLVMContext(), MDStrings));
+      }
+      inst->setMetadata("precision", llvm::MDNode::get(getLLVMContext(), MDs));
+    }
     break;
+  }
   case Stmt::CompoundStmtClass:
     EmitCompoundStmt(cast<CompoundStmt>(*S));
     break;

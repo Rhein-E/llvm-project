@@ -354,6 +354,7 @@ bool Declarator::isDeclarationOfFunction() const {
     case TST_decimal32:
     case TST_decimal64:
     case TST_double:
+    case TST_autofp:
     case TST_Accum:
     case TST_Fract:
     case TST_Float16:
@@ -558,7 +559,7 @@ const char *DeclSpec::getSpecifierName(DeclSpec::TST T,
   case DeclSpec::TST_half:        return "half";
   case DeclSpec::TST_float:       return "float";
   case DeclSpec::TST_double:      return "double";
-  case DeclSpec::TST_autofp:  return "__autofp";
+  case DeclSpec::TST_autofp:      return "__autofp";
   case DeclSpec::TST_accum:       return "_Accum";
   case DeclSpec::TST_fract:       return "_Fract";
   case DeclSpec::TST_float16:     return "_Float16";

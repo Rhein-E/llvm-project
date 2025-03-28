@@ -16,7 +16,7 @@
 #include "clang/Basic/SourceLocation.h"
 #include "clang/Basic/TokenKinds.h"
 #include "llvm/ADT/ArrayRef.h"
-#include "llvm/ADT/StringRef.h"
+#include "llvm/ADT/SmallVector.h"
 #include <cassert>
 
 namespace clang {
@@ -342,6 +342,21 @@ struct PragmaLoopHintInfo {
   Token Option;
   ArrayRef<Token> Toks;
 };
+
+// Precision info storage class for annotation tokens.
+struct PrecisionRangeFlags {
+  unsigned int fp16: 1;
+  unsigned int bf16: 1;
+  unsigned int fp32: 1;
+  unsigned int fp64: 1;
+  // Add more types here.
+};
+
+struct PragmaPrecisionRangeInfo {
+  ArrayRef<Token> variables;
+  ArrayRef<PrecisionRangeFlags> ranges;
+};
+
 } // end namespace clang
 
 #endif // LLVM_CLANG_LEX_TOKEN_H
