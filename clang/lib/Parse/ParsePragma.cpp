@@ -375,6 +375,12 @@ struct PragmaPrecisionRegionHandler : public PragmaHandler {
                     Token &FirstToken) override;
 };
 
+struct PragmaPrecisionErrorHandler : public PragmaHandler {
+  PragmaPrecisionErrorHandler() : PragmaHandler("error") {}
+  void HandlePragma(Preprocessor &PP, PragmaIntroducer Introducer,
+                    Token &FirstToken) override;
+};
+
 void markAsReinjectedForRelexing(llvm::MutableArrayRef<clang::Token> Toks) {
   for (auto &T : Toks)
     T.setFlag(clang::Token::IsReinjected);
@@ -533,6 +539,9 @@ void Parser::initializePragmaHandlers() {
 
   PrecisionRegionHandler = std::make_unique<PragmaPrecisionRegionHandler>();
   PP.AddPragmaHandler("precision", PrecisionRegionHandler.get());
+
+  PrecisionErrorHandler = std::make_unique<PragmaPrecisionErrorHandler>();
+  PP.AddPragmaHandler("precision", PrecisionErrorHandler.get());
 }
 
 void Parser::resetPragmaHandlers() {
@@ -671,6 +680,9 @@ void Parser::resetPragmaHandlers() {
 
   PP.RemovePragmaHandler("precision", PrecisionRegionHandler.get());
   PrecisionRegionHandler.reset();
+
+  PP.RemovePragmaHandler("precision", PrecisionErrorHandler.get());
+  PrecisionErrorHandler.reset();
 }
 
 /// Handle the annotation token produced for #pragma unused(...)
@@ -4162,15 +4174,71 @@ void PragmaPrecisionRangeHandler::HandlePragma(Preprocessor &PP, PragmaIntroduce
 }
 
 void PragmaPrecisionRegionHandler::HandlePragma(Preprocessor &PP, PragmaIntroducer Introducer, Token &FirstToken) {
-  Token tok;
+  Token tok, annonationTok;
+  
   PP.Lex(tok);
   if (tok.isNot(tok::eod))
     PP.Diag(tok.getLocation(), diag::warn_pragma_extra_tokens_at_eol)
         << PP.getSpelling(FirstToken);
   
-  tok.startToken();
-  tok.setKind(tok::annot_pragma_precision_region);
-  tok.setLocation(FirstToken.getLocation());
-  tok.setAnnotationEndLoc(FirstToken.getLocation());
-  PP.EnterToken(tok, false);
+  annonationTok.startToken();
+  annonationTok.setKind(tok::annot_pragma_precision_region);
+  annonationTok.setLocation(FirstToken.getLocation());
+  annonationTok.setAnnotationEndLoc(FirstToken.getLocation());
+  PP.EnterToken(annonationTok, false);
+}
+
+void PragmaPrecisionErrorHandler::HandlePragma(Preprocessor &PP, PragmaIntroducer Introducer, Token &FirstToken) {
+  Token tok, annonationTok;
+  llvm::SmallVector<Token> variables;
+  llvm::SmallVector<llvm::APFloat> errors;
+
+  do {
+    PP.Lex(tok); // Eat ','.
+    if (tok.isNot(tok::identifier)) {
+      PP.Diag(tok.getLocation(), diag::warn_pragma_expected_identifier)
+          << PP.getSpelling(FirstToken);
+      return;
+    }
+    variables.emplace_back(tok);
+    PP.Lex(tok); // Eat identifier.
+    
+    if (tok.isNot(tok::l_paren)) {
+      PP.Diag(tok.getLocation(), diag::warn_pragma_expected_lparen)
+          << PP.getSpelling(FirstToken);
+      return;
+    }
+    PP.Lex(tok); // Eat '('.
+
+    if (tok.isNot(tok::numeric_constant)) {
+      PP.Diag(tok.getLocation(),diag::warn_pragma_expected_numeric_constant)
+          << PP.getSpelling(FirstToken);
+      return;
+    }
+    llvm::APFloat error(llvm::APFloat::IEEEquad(),
+                        llvm::SmallString<16>(tok.getLiteralData(), tok.getLiteralData() + tok.getLength()));
+    errors.emplace_back(error);
+    PP.Lex(tok); // Eat numeric constant.
+
+    if (tok.isNot(tok::r_paren)) {
+      PP.Diag(tok.getLocation(), diag::warn_pragma_expected_rparen)
+          << PP.getSpelling(FirstToken);
+      return;
+    }
+    PP.Lex(tok); // Eat ')'.
+  } while (tok.is(tok::comma));
+  if (tok.isNot(tok::eod))
+    PP.Diag(tok.getLocation(), diag::warn_pragma_extra_tokens_at_eol)
+        << PP.getSpelling(FirstToken);
+
+  auto *info = new (PP.getPreprocessorAllocator()) PragmaPrecisionErrorInfo;
+  info->variables = llvm::ArrayRef<Token>(variables).copy(PP.getPreprocessorAllocator());
+  info->errors = llvm::ArrayRef<llvm::APFloat>(errors).copy(PP.getPreprocessorAllocator());
+  
+  annonationTok.startToken();
+  annonationTok.setKind(tok::annot_pragma_precision_error);
+  annonationTok.setLocation(FirstToken.getLocation());
+  annonationTok.setAnnotationEndLoc(FirstToken.getLocation());
+  annonationTok.setAnnotationValue(reinterpret_cast<void *>(info));
+  PP.EnterToken(annonationTok, false);
 }

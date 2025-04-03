@@ -511,7 +511,7 @@ Retry:
   case tok::annot_pragma_precision_range: {
     auto *info = Tok.getAnnotationValue();
     auto stmt = Actions.ActOnNullStmt(ConsumeToken());
-    Actions.getASTContext().setPrecisionInfo(stmt.getAs<NullStmt>(), info);
+    Actions.getASTContext().setPrecisionRanges(stmt.getAs<NullStmt>(), info);
     return stmt;
   }
 
@@ -523,6 +523,13 @@ Retry:
     auto endstmt = Actions.ActOnNullStmt(bodystmt.get()->getEndLoc());
     Actions.getASTContext().addPrecisionRegionEnd(endstmt.getAs<NullStmt>());
     return Actions.ActOnCompoundStmt(loc, bodystmt.get()->getEndLoc(), {beginstmt.get(), bodystmt.get(), endstmt.get()}, false);
+  }
+
+  case tok::annot_pragma_precision_error : {
+    auto *info = Tok.getAnnotationValue();
+    auto stmt = Actions.ActOnNullStmt(ConsumeToken());
+    Actions.getASTContext().setPrecisionErrors(stmt.getAs<NullStmt>(), info);
+    return stmt;
   }
   }
 

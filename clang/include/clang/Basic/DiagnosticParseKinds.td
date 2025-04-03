@@ -1128,8 +1128,11 @@ def err_type_trait_arity : Error<
   "%3 argument%s3">;
 
 // Language specific pragmas
+// Precision pragmas
 def warn_pragma_invalid_precision : Warning<
   "invalid float point precision after '#pragma %0' - ignoring">, InGroup<IgnoredPragmas>;
+def warn_pragma_expected_numeric_constant : Warning<
+  "expected numeric constant after '#pragma %0' - ignoring">, InGroup<IgnoredPragmas>;
 // - Generic warnings
 def warn_pragma_expected_lparen : Warning<
   "missing '(' after '#pragma %0' - ignoring">, InGroup<IgnoredPragmas>;

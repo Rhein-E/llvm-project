@@ -970,6 +970,7 @@ ANNOTATION(repl_input_end)
 // Annotations for precision pragmas.
 ANNOTATION(pragma_precision_region)
 ANNOTATION(pragma_precision_range)
+ANNOTATION(pragma_precision_error)
 
 #undef PRAGMA_ANNOTATION
 #undef ANNOTATION

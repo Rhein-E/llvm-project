@@ -15,8 +15,7 @@
 
 #include "clang/Basic/SourceLocation.h"
 #include "clang/Basic/TokenKinds.h"
-#include "llvm/ADT/ArrayRef.h"
-#include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/APFloat.h"
 #include <cassert>
 
 namespace clang {
@@ -355,6 +354,11 @@ struct PrecisionRangeFlags {
 struct PragmaPrecisionRangeInfo {
   ArrayRef<Token> variables;
   ArrayRef<PrecisionRangeFlags> ranges;
+};
+
+struct PragmaPrecisionErrorInfo {
+  ArrayRef<Token> variables;
+  ArrayRef<llvm::APFloat> errors;
 };
 
 } // end namespace clang

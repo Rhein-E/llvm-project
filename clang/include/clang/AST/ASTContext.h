@@ -456,25 +456,19 @@ class ASTContext : public RefCountedBase<ASTContext> {
 
   ASTContext &this_() { return *this; }
 
+// Precision pragma info.
 private:
-  // Precision pragma info attached to NullStmt Nodes.
-  llvm::DenseMap<const NullStmt *, void *> PrecisionInfoMap;
-
   // Precision regions.
   llvm::DenseSet<const NullStmt *> PrecisionRegionStarts;
   llvm::DenseSet<const NullStmt *> PrecisionRegionEnds;
 
+  // Precision ranges.
+  llvm::DenseMap<const NullStmt *, void *> PrecisionRangeMap;
+
+  // Precision errors.
+  llvm::DenseMap<const NullStmt *, void *> PrecisionErrorMap;
+
 public:
-  void setPrecisionInfo(const NullStmt *const NS, void *const Info) {
-    PrecisionInfoMap[NS] = Info;
-  }
-
-  void *getPrecisionInfo(const NullStmt *const NS) const {
-    if (PrecisionInfoMap.find(NS) == PrecisionInfoMap.end())
-      return nullptr;
-    return PrecisionInfoMap.at(NS);
-  }
-
   void addPrecisionRegionStart(const NullStmt *const NS) {
     PrecisionRegionStarts.insert(NS);
   }
@@ -489,6 +483,26 @@ public:
 
   const llvm::DenseSet<const NullStmt *> &getPrecisionRegionEnds() const {
     return PrecisionRegionEnds;
+  }
+
+  void setPrecisionRanges(const NullStmt *const NS, void *const Info) {
+    PrecisionRangeMap[NS] = Info;
+  }
+
+  void *getPrecisionRanges(const NullStmt *const NS) const {
+    if (PrecisionRangeMap.find(NS) == PrecisionRangeMap.end())
+      return nullptr;
+    return PrecisionRangeMap.at(NS);
+  }
+  
+  void setPrecisionErrors(const NullStmt *const NS, void *const Info) {
+    PrecisionErrorMap[NS] = Info;
+  }
+
+  void *getPrecisionErrors(const NullStmt *const NS) const {
+    if (PrecisionErrorMap.find(NS) == PrecisionErrorMap.end())
+      return nullptr;
+    return PrecisionErrorMap.at(NS);
   }
 
 public:

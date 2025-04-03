@@ -222,6 +222,7 @@ class Parser : public CodeCompletionHandler {
   std::unique_ptr<PragmaHandler> RISCVPragmaHandler;
   std::unique_ptr<PragmaHandler> PrecisionRangeHandler;
   std::unique_ptr<PragmaHandler> PrecisionRegionHandler;
+  std::unique_ptr<PragmaHandler> PrecisionErrorHandler;
 
   std::unique_ptr<CommentHandler> CommentSemaHandler;
 
