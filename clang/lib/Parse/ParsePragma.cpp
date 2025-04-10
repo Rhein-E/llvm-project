@@ -14,6 +14,7 @@
 #include "clang/Basic/DiagnosticParse.h"
 #include "clang/Basic/PragmaKinds.h"
 #include "clang/Basic/TargetInfo.h"
+#include "clang/Basic/TokenKinds.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Lex/Token.h"
 #include "clang/Parse/LoopHint.h"
@@ -22,6 +23,7 @@
 #include "clang/Sema/EnterExpressionEvaluationContext.h"
 #include "clang/Sema/Scope.h"
 #include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringSwitch.h"
 #include <optional>
 using namespace clang;
@@ -4111,14 +4113,15 @@ void PragmaPrecisionRangeHandler::HandlePragma(Preprocessor &PP, PragmaIntroduce
     if (tok.is(tok::comma)) {
       PP.Lex(tok); // Eat ','.
     }
-    if (tok.isNot(tok::identifier)) {
-      PP.Diag(tok.getLocation(), diag::warn_pragma_expected_identifier)
-          << PP.getSpelling(FirstToken);
-      return;
+    if (tok.is(tok::identifier)) {
+      variables.emplace_back(tok);
+      PP.Lex(tok); // Eat identifier.
+    } else {
+      Token placeholder(tok);
+      placeholder.setKind(tok::kw_nullptr);
+      variables.emplace_back(placeholder); // Placeholder.
     }
-    variables.emplace_back(tok);
     
-    PP.Lex(tok); // Eat identifier.
     if (tok.isNot(tok::l_paren)) {
       PP.Diag(tok.getLocation(), diag::warn_pragma_expected_lparen)
           << PP.getSpelling(FirstToken);
@@ -4136,7 +4139,6 @@ void PragmaPrecisionRangeHandler::HandlePragma(Preprocessor &PP, PragmaIntroduce
         case tok::kw_float:
           range.fp32 = 1;
           break;
-        case tok::kw_half:
         case tok::kw__Float16:
           range.fp16 = 1;
           break;
@@ -4191,7 +4193,7 @@ void PragmaPrecisionRegionHandler::HandlePragma(Preprocessor &PP, PragmaIntroduc
 void PragmaPrecisionErrorHandler::HandlePragma(Preprocessor &PP, PragmaIntroducer Introducer, Token &FirstToken) {
   Token tok, annonationTok;
   llvm::SmallVector<Token> variables;
-  llvm::SmallVector<llvm::APFloat> errors;
+  llvm::SmallVector<llvm::SmallString<8>> errors;
 
   do {
     PP.Lex(tok); // Eat ','.
@@ -4215,9 +4217,7 @@ void PragmaPrecisionErrorHandler::HandlePragma(Preprocessor &PP, PragmaIntroduce
           << PP.getSpelling(FirstToken);
       return;
     }
-    llvm::APFloat error(llvm::APFloat::IEEEquad(),
-                        llvm::SmallString<16>(tok.getLiteralData(), tok.getLiteralData() + tok.getLength()));
-    errors.emplace_back(error);
+    errors.emplace_back(tok.getLiteralData(), tok.getLiteralData() + tok.getLength());
     PP.Lex(tok); // Eat numeric constant.
 
     if (tok.isNot(tok::r_paren)) {
@@ -4233,7 +4233,7 @@ void PragmaPrecisionErrorHandler::HandlePragma(Preprocessor &PP, PragmaIntroduce
 
   auto *info = new (PP.getPreprocessorAllocator()) PragmaPrecisionErrorInfo;
   info->variables = llvm::ArrayRef<Token>(variables).copy(PP.getPreprocessorAllocator());
-  info->errors = llvm::ArrayRef<llvm::APFloat>(errors).copy(PP.getPreprocessorAllocator());
+  info->errors = llvm::ArrayRef<llvm::SmallString<8>>(errors).copy(PP.getPreprocessorAllocator());
   
   annonationTok.startToken();
   annonationTok.setKind(tok::annot_pragma_precision_error);

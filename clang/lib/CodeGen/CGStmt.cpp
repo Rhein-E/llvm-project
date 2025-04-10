@@ -450,7 +450,9 @@ bool CodeGenFunction::EmitSimpleStmt(const Stmt *S,
       SmallVector<llvm::Metadata *, 8> MDs;
       for (auto [var, range] : zip(rangeInfo->variables, rangeInfo->ranges)) {
         SmallVector<llvm::Metadata *, 8> MDStrings;
-        MDStrings.emplace_back(llvm::MDString::get(getLLVMContext(), var.getIdentifierInfo()->getName()));
+        if (var.isAnyIdentifier()) {
+          MDStrings.emplace_back(llvm::MDString::get(getLLVMContext(), var.getIdentifierInfo()->getName()));
+        }
         if (range.fp64) {
           MDStrings.emplace_back(llvm::MDString::get(getLLVMContext(), "double"));
         }
@@ -474,9 +476,7 @@ bool CodeGenFunction::EmitSimpleStmt(const Stmt *S,
       for (auto [var, error] : zip(errorInfo->variables, errorInfo->errors)) {
         SmallVector<llvm::Metadata *, 8> MDStrings;
         MDStrings.emplace_back(llvm::MDString::get(getLLVMContext(), var.getIdentifierInfo()->getName()));
-        llvm::SmallString<16> str;
-        error.toString(str);
-        MDStrings.emplace_back(llvm::MDString::get(getLLVMContext(), str));
+        MDStrings.emplace_back(llvm::MDString::get(getLLVMContext(), error));
         MDs.emplace_back(llvm::MDNode::get(getLLVMContext(), MDStrings));
       }
       auto *metadata = llvm::MDNode::get(getLLVMContext(), MDs);

@@ -358,7 +358,7 @@ struct PragmaPrecisionRangeInfo {
 
 struct PragmaPrecisionErrorInfo {
   ArrayRef<Token> variables;
-  ArrayRef<llvm::APFloat> errors;
+  ArrayRef<llvm::SmallString<8>> errors;
 };
 
 } // end namespace clang
