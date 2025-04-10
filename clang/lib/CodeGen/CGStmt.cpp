@@ -460,10 +460,10 @@ bool CodeGenFunction::EmitSimpleStmt(const Stmt *S,
           MDStrings.emplace_back(llvm::MDString::get(getLLVMContext(), "float"));
         }
         if (range.fp16) {
-          MDStrings.emplace_back(llvm::MDString::get(getLLVMContext(), "fp16"));
+          MDStrings.emplace_back(llvm::MDString::get(getLLVMContext(), "_Float16"));
         }
         if (range.bf16) {
-          MDStrings.emplace_back(llvm::MDString::get(getLLVMContext(), "bf16"));
+          MDStrings.emplace_back(llvm::MDString::get(getLLVMContext(), "__bf16"));
         }
         MDs.emplace_back(llvm::MDNode::get(getLLVMContext(), MDStrings));
       }
